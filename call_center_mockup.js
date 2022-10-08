@@ -161,7 +161,7 @@ class DotGrid {
 
   colorRandom() {
     for (let i = 0; i < this.dotCount; i++) {
-      this.dotArray[i].dotColor = color(noise(this.dotArray[i].pos.x * this.dotArray[i].pos.y + i + frameCount / 100), 0.5, 1);
+      this.dotArray[i].dotColor = color(noise(this.dotArray[i].pos.x * this.dotArray[i].pos.y + i + millis() / 1800), 0.5, 1);
     }
   }
 
