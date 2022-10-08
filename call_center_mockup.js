@@ -185,13 +185,11 @@ class DotGrid {
     let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
     let disabledDotPosX = this.dotArray[this.dotArray.length - 1].pos.x + this.tileSize;
     let disabledDotPosY = this.dotArray[this.dotArray.length - 1].pos.y;
-    let disabledDotSpan = width - disabledDotPosX;
 
     while (disabledDotPosX < this.gridColumns * this.tileSize - 0.001) {
       fill(this.disabledDotColor);
       circle(disabledDotPosX, disabledDotPosY, tempRadius);
       disabledDotPosX += this.tileSize;
-      disabledDotSpan -= this.tileSize;
     }
     
     pop();
