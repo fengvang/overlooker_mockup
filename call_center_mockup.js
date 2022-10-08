@@ -1,6 +1,5 @@
 let testDots = 0;
 let boolWGL = 1;
-p5.disableFriendlyErrors = true; // temp killing debugging for perf.
 
 function setup() {
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
