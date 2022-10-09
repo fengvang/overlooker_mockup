@@ -1,6 +1,12 @@
 let testDots = 0;
 let boolWGL = 1;
-p5.disableFriendlyErrors = true; // temp killing debugging for perf.
+p5.disableFriendlyErrors = true; // helps a bit with perf.
+
+let fontRegular, fontBold;
+function preload() {
+  fontRegular = loadFont('assets/Inconsolata-Regular.ttf');
+  fontBold = loadFont('assets/Inconsolata-Bold.ttf');
+}
 
 function setup() {
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
@@ -10,7 +16,7 @@ function setup() {
   colorMode(HSB, 1, 1, 1, 1);
 
   testDots = new DotGrid(5000, windowWidth, windowHeight);
-  testDots.initDotArray();
+  testDots.disabledDotColor = color(0.3, 0.1, 0.9);
 }
 
 function draw() {
@@ -28,6 +34,7 @@ function layoutA() {
 
   testDots.colorRandom();
   testDots.display();
+  displayFPS();
 }
 
 // P5.js calls this natively every time the window gets resized.
@@ -38,6 +45,25 @@ function windowResized() {
   testDots.updateTilingMaxSpan();
   testDots.updatePosition();
   testDots.updateSize();
+}
+
+function displayFPS() {
+  let fps = Math.round(frameRate());
+  let textSpacing = height / 15;
+
+  push();
+  textFont(fontBold);
+  fill(color(1, 1, 0));
+  textSize(textSpacing);
+  
+  if (boolWGL == 1) {
+    translate(textSpacing - width / 2, (3 * textSpacing - height) / 2, 0);
+    text(fps, 0, 0)
+  } else {
+    translate(textSpacing, (3 * textSpacing) / 2, 0);
+    text(fps, 0, 0)
+  }
+  pop();
 }
 
 // Using this instead of builtin P5.Vectors because they're overkill for now.
@@ -69,16 +95,18 @@ class DotSingle {
 class DotGrid {
   constructor(tempDotCount, tempWidth, tempHeight) {
     this.dotCount = tempDotCount;
-    this.spanW = 0;
     this.gridWidth = tempWidth;
     this.gridHeight = tempHeight;
+    this.spanW = 0;
     this.tileSize = 0;
     this.dotPadding = 0;
     this.gridRows = 0;
     this.gridColumns = 0;
-    this.posMap = [];
     this.dotArray = [];
-    this.disabledDotColor = color(0.3, 0.1, 0.9);
+    this.posMap = [];
+    this.disabledDotColor = 0;
+
+    this.initDotArray();
   }
 
   initDotArray() {
@@ -137,6 +165,7 @@ class DotGrid {
     }
   }
 
+  // Storing this as an attribute and then accessing for each dot is probably bad.
   updateSize() {
     if (this.dotPadding < 1.0) {
       for (let i = 0; i < this.dotCount; i++) {
@@ -144,6 +173,7 @@ class DotGrid {
       }
     } else {
       this.dotArray[i].radius = this.tileSize;
+      print("dotPadding was greater than or equal to one - defaulting to no padding");
     }
   }
 
@@ -186,6 +216,7 @@ class DotGrid {
       this.dotArray[i].display();
     }
 
+    // Draws disabledDots at the last line and stops before going offscreen.
     let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
     let disabledDotPosX = this.dotArray[this.dotArray.length - 1].pos.x + this.tileSize;
     let disabledDotPosY = this.dotArray[this.dotArray.length - 1].pos.y;
