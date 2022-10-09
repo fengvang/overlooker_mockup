@@ -11,9 +11,10 @@ function preload() {
 function setup() {
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
   cnv.style('display', 'block');
-  smooth(8);
+  smooth();
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
+  textFont(fontBold);
 
   testDots = new DotGrid(5000, windowWidth, windowHeight);
   testDots.disabledDotColor = color(0.3, 0.1, 0.9);
@@ -34,6 +35,7 @@ function layoutA() {
 
   testDots.colorRandom();
   testDots.display();
+  testDots.mouseOver();
   displayFPS();
 }
 
@@ -52,10 +54,9 @@ function displayFPS() {
   let textSpacing = height / 15;
 
   push();
-  textFont(fontBold);
   fill(color(1, 1, 0));
   textSize(textSpacing);
-  
+
   if (boolWGL == 1) {
     translate(textSpacing - width / 2, (3 * textSpacing - height) / 2, 0);
     text(fps, 0, 0)
@@ -165,7 +166,7 @@ class DotGrid {
     }
   }
 
-  // Storing this as an attribute and then accessing for each dot is probably bad.
+  // Storing this as an attribute and then accessing for each dot is probably bad if it never varies.
   updateSize() {
     if (this.dotPadding < 1.0) {
       for (let i = 0; i < this.dotCount; i++) {
@@ -208,6 +209,29 @@ class DotGrid {
     }
   }
 
+  // General proof of concept. Right now the margins aren't factored in.
+  // Currently thinking of using some classwide variables w/ centerGrid to figure out spacing.
+  // Haven't made it work with the P2D yet either.
+  mouseOver() {
+    push();
+    fill(color(1, 1, 0));
+    let textSpacing = height / 15;
+    textSize(textSpacing);
+
+    // Mouse functions depend on renderer's coord system.
+    if (boolWGL == 1) {
+      let xPos = floor(mouseX / this.tileSize);
+      let yPos = floor(mouseY / this.tileSize) * this.gridColumns;
+      let tileIndex = xPos + yPos;
+      translate(textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2, 0);
+      text("Index: " + tileIndex, 0, 0)
+    } else {
+      translate(0, (3 * textSpacing) / 2, 0);
+      text(tileIndex, 0, 0)
+    }
+    pop();
+  }
+
   display() {
     push();
     this.centerGrid();
@@ -217,14 +241,49 @@ class DotGrid {
     }
 
     // Draws disabledDots at the last line and stops before going offscreen.
+    fill(this.disabledDotColor);
     let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
     let disabledDotPosX = this.dotArray[this.dotArray.length - 1].pos.x + this.tileSize;
     let disabledDotPosY = this.dotArray[this.dotArray.length - 1].pos.y;
 
     while (disabledDotPosX < this.gridColumns * this.tileSize - 0.001) {
-      fill(this.disabledDotColor);
       circle(disabledDotPosX, disabledDotPosY, tempRadius);
       disabledDotPosX += this.tileSize;
+    }
+
+    pop();
+  }
+
+  // Test function where everything is calculated every frame instead of accessing parameters from dotArray.
+  // Not useful yet, but may help get the logic down if we move to shaders in the future.
+  displayImmediate() {
+    push();
+    this.centerGrid();
+    let liveY = 0;
+    let liveX = 0;
+    let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
+    let immediateCounter = 0;
+
+    for (let y = 0; y < this.gridRows; y++) {
+      for (let x = 0; x < this.gridColumns; x++) {
+
+        // Render the trailing dots and exit the loop after the last dot is reached.
+        if (immediateCounter < this.dotCount) {
+          fill(color(noise(liveX * liveY + immediateCounter + millis() / 1800), 0.5, 1));
+          circle(liveX, liveY, tempRadius);
+          liveX += this.tileSize;
+          immediateCounter++;
+        } else {
+          fill(this.disabledDotColor);
+          while (liveX < this.gridColumns * this.tileSize - 0.001) {
+            circle(liveX, liveY, tempRadius);
+            liveX += this.tileSize;
+          }
+          break;
+        }
+      }
+      liveX = 0;
+      liveY += this.tileSize;
     }
 
     pop();
