@@ -1,6 +1,6 @@
 let testDots = 0;
 let boolWGL = 1;
-p5.disableFriendlyErrors = true; // debug hurts perf.
+p5.disableFriendlyErrors = true; // temp killing debugging for perf.
 
 function setup() {
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
@@ -149,23 +149,27 @@ class DotGrid {
 
   // The WebGL and P2D renderers use different coord systems, so the grid has to be centered differently.
   centerGrid() {
-    if (boolWGL == 1) {
+    let offsetX = 0;
+    let offsetY = 0;
 
-      // If the tiles span width, then center by height.
+    if (boolWGL == 1) {
       if (this.spanW == 1) {
-        let offsetX = (testDots.tileSize - width) / 2;
-        let offsetY = (testDots.tileSize - height) / 2 + (height - testDots.tileSize * testDots.gridRows) / 2;
-        translate(offsetX, offsetY, 0);
+        offsetX = (this.tileSize - width) / 2;
+        offsetY = (this.tileSize * (1 - this.gridRows)) / 2;
       } else {
-        let offsetX = (testDots.tileSize - width) / 2 + (width - testDots.tileSize * testDots.gridColumns) / 2;
-        let offsetY = (testDots.tileSize - height) / 2;
-        translate(offsetX, offsetY, 0);
+        offsetX = (this.tileSize * (1 - this.gridColumns)) / 2;
+        offsetY = (this.tileSize - height) / 2;
       }
     } else {
-      let centerX = (width - (testDots.dotColumns + 100) * testDots.tileSize) / 2;
-      let centerY = (height - (testDots.dotRows - 1) * testDots.tileSize) / 2;
-      translate(centerX, centerY);
+      if (this.spanW == 1) {
+        offsetX = this.tileSize / 2;
+        offsetY = (height - this.tileSize * (this.gridRows - 1)) / 2;
+      } else {
+        offsetX = (width - this.tileSize * (this.gridColumns - 1)) / 2;
+        offsetY = this.tileSize / 2;
+      }
     }
+    translate(offsetX, offsetY, 0);
   }
 
   colorRandom() {
@@ -191,7 +195,7 @@ class DotGrid {
       circle(disabledDotPosX, disabledDotPosY, tempRadius);
       disabledDotPosX += this.tileSize;
     }
-    
+
     pop();
   }
 }
