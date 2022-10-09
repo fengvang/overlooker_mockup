@@ -35,7 +35,7 @@ function layoutA() {
 
   testDots.colorRandom();
   testDots.display();
-  testDots.mouseOver();
+  testDots.mouseHover();
   displayFPS();
 }
 
@@ -212,7 +212,7 @@ class DotGrid {
   // General proof of concept. Right now the margins aren't factored in.
   // Currently thinking of using some classwide variables w/ centerGrid to figure out spacing.
   // Haven't made it work with the P2D yet either.
-  mouseOver() {
+  mouseHover() {
     push();
     fill(color(1, 1, 0));
     let textSpacing = height / 15;
