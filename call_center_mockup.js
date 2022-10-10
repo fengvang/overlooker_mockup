@@ -1,5 +1,6 @@
 let testDots = 0;
 let boolWGL = 1;
+let textSpacing = 0;
 p5.disableFriendlyErrors = true; // helps a bit with perf.
 
 let fontRegular, fontBold;
@@ -15,6 +16,9 @@ function setup() {
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
+
+  textSpacing = height / 15;
+  textSize(textSpacing);
 
   testDots = new DotGrid(5000, windowWidth, windowHeight);
   testDots.disabledDotColor = color(0.3, 0.1, 0.9);
@@ -51,11 +55,9 @@ function windowResized() {
 
 function displayFPS() {
   let fps = Math.round(frameRate());
-  let textSpacing = height / 15;
 
   push();
   fill(color(1, 1, 0));
-  textSize(textSpacing);
 
   if (boolWGL == 1) {
     translate(textSpacing - width / 2, (3 * textSpacing - height) / 2, 0);
@@ -209,19 +211,17 @@ class DotGrid {
     }
   }
 
-  // Haven't made it work with the P2D yet either.
+  // Doesn't work with the P2D renderer yet.
   mouseHover() {
     let offsetX = 0;
     let offsetY = 0;
 
     push();
     fill(color(1, 1, 0));
-    let textSpacing = height / 15;
-    textSize(textSpacing);
 
     // Mouse functions depend on renderer's coord system.
     if (boolWGL == 1) {
-      
+
       // Accounting for margins.
       if (this.spanW == 1) {
         offsetY = (height - this.tileSize * this.gridRows) / 2;
@@ -231,9 +231,9 @@ class DotGrid {
       let xPos = floor((mouseX - offsetX) / this.tileSize);
       let yPos = floor((mouseY - offsetY) / this.tileSize) * this.gridColumns;
       let tileIndex = xPos + yPos;
-      
+
       if (xPos < 0 || xPos >= this.gridColumns || yPos < 0 || tileIndex >= this.dotCount) {
-        tileIndex = "UDF"; 
+        tileIndex = "UDF";
       }
       translate(textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2, 0);
       text("Index " + tileIndex, 0, 0)
