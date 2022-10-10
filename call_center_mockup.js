@@ -232,7 +232,7 @@ class DotGrid {
       let yPos = floor((mouseY - offsetY) / this.tileSize) * this.gridColumns;
       let tileIndex = xPos + yPos;
       
-      if (xPos < 0 || xPos >= this.gridColumns || yPos < 0 || yPos >= this.dotCount) {
+      if (xPos < 0 || xPos >= this.gridColumns || yPos < 0 || tileIndex >= this.dotCount) {
         tileIndex = "UDF"; 
       }
       translate(textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2, 0);
