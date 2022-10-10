@@ -209,10 +209,11 @@ class DotGrid {
     }
   }
 
-  // General proof of concept. Right now the margins aren't factored in.
-  // Currently thinking of using some classwide variables w/ centerGrid to figure out spacing.
   // Haven't made it work with the P2D yet either.
   mouseHover() {
+    let offsetX = 0;
+    let offsetY = 0;
+
     push();
     fill(color(1, 1, 0));
     let textSpacing = height / 15;
@@ -220,11 +221,22 @@ class DotGrid {
 
     // Mouse functions depend on renderer's coord system.
     if (boolWGL == 1) {
-      let xPos = floor(mouseX / this.tileSize);
-      let yPos = floor(mouseY / this.tileSize) * this.gridColumns;
+      
+      // Accounting for margins.
+      if (this.spanW == 1) {
+        offsetY = (height - this.tileSize * this.gridRows) / 2;
+      } else {
+        offsetX = (width - this.tileSize * this.gridColumns) / 2;
+      }
+      let xPos = floor((mouseX - offsetX) / this.tileSize);
+      let yPos = floor((mouseY - offsetY) / this.tileSize) * this.gridColumns;
       let tileIndex = xPos + yPos;
+      
+      if (xPos < 0 || xPos >= this.gridColumns || yPos < 0 || yPos >= this.dotCount) {
+        tileIndex = "UDF"; 
+      }
       translate(textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2, 0);
-      text("Index: " + tileIndex, 0, 0)
+      text("Index " + tileIndex, 0, 0)
     } else {
       translate(0, (3 * textSpacing) / 2, 0);
       text(tileIndex, 0, 0)
