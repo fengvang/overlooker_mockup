@@ -234,7 +234,7 @@ class DotGrid {
 
       if (discreteXPos < 0 || this.gridColumns <= discreteXPos || discreteYPos < 0 || this.dotCount <= tileIndex) {
         tileIndex = "UDF";
-      } else if (centerDistance > this.tileSize * (1 - this.dotPadding)) {
+      } else if (centerDistance > this.tileRadius) {
         tileIndex = "MISS";
       }
 
