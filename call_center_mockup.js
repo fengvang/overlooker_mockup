@@ -29,7 +29,6 @@ function setup() {
 
   testDots = new DotGrid(5000, windowWidth, windowHeight, dotPadding);
   testDots.disabledDotColor = color(0.3, 0.1, 0.9);
-  testDots.updateTilingMaxSpan();
 }
 
 // Main draw thread:
@@ -117,6 +116,9 @@ class DotGrid {
     // This could be where we first start storing stuff from the API.
     this.dotArray = [];
     this.initDotArray();
+    
+    // Calculate the initial attributes of the grid.
+    this.updateTilingMaxSpan();
   }
 
   initDotArray() {
