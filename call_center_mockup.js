@@ -1,64 +1,72 @@
-let testDots = 0;
-let boolWGL = 1;
-let textSpacing = 0;
-p5.disableFriendlyErrors = true; // helps a bit with perf.
+p5.disableFriendlyErrors = true; // Helps with perf on deployed webpage; disable when working on code.
+let boolWGL = 1; // Need to set this if using WebGL.
 
+let testDots = 0;
+let textSpacing = 0;
 let fontRegular, fontBold;
+
 function preload() {
   fontRegular = loadFont('assets/Inconsolata-Regular.ttf');
   fontBold = loadFont('assets/Inconsolata-Bold.ttf');
 }
 
 function setup() {
+  // The var cnv declaration stops a useless scroll bar from showing for some reason.
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
   cnv.style('display', 'block');
+
   smooth();
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
-  textFont(fontBold);
 
+  // Font size and spacing for the debug overlay.
+  textFont(fontBold);
   textSpacing = height / 15;
   textSize(textSpacing);
 
-  testDots = new DotGrid(5000, windowWidth, windowHeight);
+  // Dot padding is the empty white space around each dot. Normalized: setting to 1.0 will eliminate the entire dot.
+  let dotPadding = 0;
+
+  testDots = new DotGrid(5000, windowWidth, windowHeight, dotPadding);
   testDots.disabledDotColor = color(0.3, 0.1, 0.9);
+  testDots.updateTilingMaxSpan();
 }
 
+// Main draw thread:
 function draw() {
   layoutA();
 }
 
 function layoutA() {
+  // Whatever appears first gets drawn over by things that appear later, so
+  // background belongs at the top.
   background(0.3, 0.1, 1.0);
 
-  if (frameCount < 2) {
-    testDots.updateTilingMaxSpan();
-    testDots.updatePosition();
-    testDots.updateSize();
-  }
-
+  // Main dot rendering.
   testDots.colorRandom();
   testDots.display();
+
+  // Debug hud.
   testDots.mouseHover();
   displayFPS();
 }
 
 // P5.js calls this natively every time the window gets resized.
+// Needed for refitting the grid when phones are rotated or the browser window is changed.
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   testDots.gridWidth = width;
   testDots.gridHeight = height;
   testDots.updateTilingMaxSpan();
-  testDots.updatePosition();
-  testDots.updateSize();
 }
 
+// Prints the current FPS in the upper-left hand corner:
 function displayFPS() {
-  let fps = Math.round(frameRate());
-
   push();
   fill(color(1, 1, 0));
+  let fps = Math.round(frameRate());
 
+  // Have to center the text depending on renderer due to different coord systems between P2D and webGL.
   if (boolWGL == 1) {
     translate(textSpacing - width / 2, (3 * textSpacing - height) / 2, 0);
     text(fps, 0, 0)
@@ -69,46 +77,45 @@ function displayFPS() {
   pop();
 }
 
-// Using this instead of builtin P5.Vectors because they're overkill for now.
-class simpleVector {
-  constructor(tempx, tempy) {
-    this.x = tempx;
-    this.y = tempy;
-  }
-
-  setVec(tempx, tempy) {
-    this.x = tempx;
-    this.y = tempy;
-  }
-}
-
+// Main dot class meant to represent the person working in the call center:
+// Right now this class only stores color, in the future it might store ID#, call state,
+// color gradient information, animation progress, etc.
+// We need to give some thought about what sort of ADT would be best here.
 class DotSingle {
   constructor() {
-    this.pos = new simpleVector();
-    this.radius = 0;
     this.dotColor = 0;
-  }
-
-  display() {
-    fill(this.dotColor);
-    circle(this.pos.x, this.pos.y, this.radius);
   }
 }
 
 class DotGrid {
-  constructor(tempDotCount, tempWidth, tempHeight) {
+  constructor(tempDotCount, tempWidth, tempHeight, tempPadding) {
+
+    // These are the main inputs into the tiling algorithm.
     this.dotCount = tempDotCount;
     this.gridWidth = tempWidth;
     this.gridHeight = tempHeight;
+
+    // We need to remember if the tiling algorithm spanned width or height to center things properly.
     this.spanW = 0;
+
+    // Dot radius can differ from tileSize due to padding.
+    this.dotRadius = 0;
+    this.dotPadding = tempPadding;
+
+    // These are the main grid attributes that will be found by the tiling algorithm.
     this.tileSize = 0;
-    this.dotPadding = 0;
     this.gridRows = 0;
     this.gridColumns = 0;
-    this.dotArray = [];
-    this.posMap = [];
+
+    // These are the grey dots that are printed at the bottom to keep an even rectangle on the screen.
     this.disabledDotColor = 0;
 
+    // Used for centering the grid in the middle of the canvas.
+    this.gridOffsetX = 0;
+    this.gridOffsetY = 0;
+
+    // This could be where we first start storing stuff from the API.
+    this.dotArray = [];
     this.initDotArray();
   }
 
@@ -118,6 +125,10 @@ class DotGrid {
     }
   }
 
+  // Main tiling algorithm:
+  // Determines how to cover the maximum area on a rectangle using n square tiles.
+  // Picks between spanning height or spanning width; whichever covers more area.
+  // BUG: Low tilecounts cause wasted space.
   updateTilingMaxSpan() {
     let offset = 0;
 
@@ -152,140 +163,116 @@ class DotGrid {
       this.tileSize = tileSizeW;
       this.spanW = 1;
     }
+
+    // dotRadius and grid centering need to be updated anytime the tiling algorithm is called.
+    this.dotRadius = this.tileSize - this.dotPadding * this.tileSize;
+    this.updateGridOffsets();
   }
 
-  updatePosition() {
-    var counter = 0;
-    for (let y = 0; y < this.gridRows; y++) {
-      for (let x = 0; x < this.gridColumns; x++) {
-        this.posMap[counter] = new simpleVector(x * this.tileSize, y * this.tileSize);
-        counter = counter + 1;
-      }
-    }
-
-    for (let i = 0; i < this.dotCount; i++) {
-      this.dotArray[i].pos = this.posMap[i];
-    }
-  }
-
-  // Storing this as an attribute and then accessing for each dot is probably bad if it never varies.
-  updateSize() {
-    if (this.dotPadding < 1.0) {
-      for (let i = 0; i < this.dotCount; i++) {
-        this.dotArray[i].radius = this.tileSize - this.dotPadding * this.tileSize;
-      }
-    } else {
-      this.dotArray[i].radius = this.tileSize;
-      print("dotPadding was greater than or equal to one - defaulting to no padding");
-    }
-  }
-
-  // The WebGL and P2D renderers use different coord systems, so the grid has to be centered differently.
-  centerGrid() {
-    let offsetX = 0;
-    let offsetY = 0;
-
+  // Function for figuring out how to center the grid in the middle of the canvas:
+  updateGridOffsets() {
+    // The WebGL and P2D renderers use different coord systems, so the grid has to be centered differently for each.
     if (boolWGL == 1) {
+      // WebGL centering:
       if (this.spanW == 1) {
-        offsetX = (this.tileSize - width) / 2;
-        offsetY = (this.tileSize * (1 - this.gridRows)) / 2;
+        this.gridOffsetX = (this.tileSize - width) / 2;
+        this.gridOffsetY = (this.tileSize * (1 - this.gridRows)) / 2;
       } else {
-        offsetX = (this.tileSize * (1 - this.gridColumns)) / 2;
-        offsetY = (this.tileSize - height) / 2;
+        this.gridOffsetX = (this.tileSize * (1 - this.gridColumns)) / 2;
+        this.gridOffsetY = (this.tileSize - height) / 2;
       }
     } else {
+      // P2D centering:
       if (this.spanW == 1) {
-        offsetX = this.tileSize / 2;
-        offsetY = (height - this.tileSize * (this.gridRows - 1)) / 2;
+        this.gridOffsetX = this.tileSize / 2;
+        this.gridOffsetY = (height - this.tileSize * (this.gridRows - 1)) / 2;
       } else {
-        offsetX = (width - this.tileSize * (this.gridColumns - 1)) / 2;
-        offsetY = this.tileSize / 2;
+        this.gridOffsetX = (width - this.tileSize * (this.gridColumns - 1)) / 2;
+        this.gridOffsetY = this.tileSize / 2;
       }
     }
-    translate(offsetX, offsetY, 0);
   }
 
+  // Temp function for generating a random color:
+  // Going in the trash once we can get API calls (or simulate them).
+  // Coloring is going to add complexity in the future since it will involve keeping track
+  // of animation states.
   colorRandom() {
     for (let i = 0; i < this.dotCount; i++) {
-      this.dotArray[i].dotColor = color(noise(this.dotArray[i].pos.x * this.dotArray[i].pos.y + i + millis() / 1800), 0.5, 1);
+      this.dotArray[i].dotColor = color(noise(i + millis() / 1800), 0.5, 1);
     }
   }
 
-  // Doesn't work with the P2D renderer yet.
+  // Prints the index of the dot underneath the mouse:
+  // Uses tileSize/gridRows/gridColumns to figure out where the mouse is.
+  // BUG: Currently it treats everything like a square.
+  // FIX: if the distance between the mouse position and the nearest dot is greater than dotRadius
+  // then we are in empty space (requires one computation of distance formula per frame, so should be cheap).
   mouseHover() {
+    let tileIndex = 0;
     let offsetX = 0;
     let offsetY = 0;
 
-    push();
-    fill(color(1, 1, 0));
-
-    // Mouse functions depend on renderer's coord system.
+    // The mouse position functions also use renderer-dependent coordinates, so we may need 2
+    // different approaches depending on if we're using P2D or WebGL.
     if (boolWGL == 1) {
 
-      // Accounting for margins.
+      // Offsets needed due to the empty space in the margins.
       if (this.spanW == 1) {
         offsetY = (height - this.tileSize * this.gridRows) / 2;
       } else {
         offsetX = (width - this.tileSize * this.gridColumns) / 2;
       }
-      let xPos = floor((mouseX - offsetX) / this.tileSize);
-      let yPos = floor((mouseY - offsetY) / this.tileSize) * this.gridColumns;
-      let tileIndex = xPos + yPos;
+      let xPos = mouseX - offsetX;
+      let yPos = mouseY - offsetY;
+      let discreteXPos = floor(xPos / this.tileSize);
+      let discreteYPos = floor(yPos / this.tileSize);
+      let tileIndex = discreteXPos + discreteYPos * this.gridColumns;
 
-      if (xPos < 0 || xPos >= this.gridColumns || yPos < 0 || tileIndex >= this.dotCount) {
+      // Had trouble finding the offsets to do this, so saving for later.
+      let centerDistance = sqrt(pow(0, 2) + pow(0, 2));
+
+      if (discreteXPos < 0 || this.gridColumns <= discreteXPos || discreteYPos < 0 || this.dotCount <= tileIndex) {
         tileIndex = "UDF";
+      } else if (centerDistance > this.tileSize * (1 - this.dotPadding)) {
+        tileIndex = "MISS";
       }
+
+      push();
+      fill(color(1, 1, 0));
       translate(textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2, 0);
       text("Index " + tileIndex, 0, 0)
+        pop();
     } else {
-      translate(0, (3 * textSpacing) / 2, 0);
-      text(tileIndex, 0, 0)
+      // TODO: get it working for P2D as well.
     }
-    pop();
   }
 
+  // Main grid display function:
+  // Instead of storing all positions in dotSingle[] and iterating thru them, I think we should
+  // just calculate them every frame since it is less code and doesn't seem to perform any worse.
+  // This same approach seems like it could be used in a shader so it might be good to work with it.
+  // It also adjusts to changes in dotCount/width/height without needing to update an array.
   display() {
     push();
-    this.centerGrid();
-
-    for (let i = 0; i < this.dotCount; i++) {
-      this.dotArray[i].display();
-    }
-
-    // Draws disabledDots at the last line and stops before going offscreen.
-    fill(this.disabledDotColor);
-    let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
-    let disabledDotPosX = this.dotArray[this.dotArray.length - 1].pos.x + this.tileSize;
-    let disabledDotPosY = this.dotArray[this.dotArray.length - 1].pos.y;
-
-    while (disabledDotPosX < this.gridColumns * this.tileSize - 0.001) {
-      circle(disabledDotPosX, disabledDotPosY, tempRadius);
-      disabledDotPosX += this.tileSize;
-    }
-
-    pop();
-  }
-
-  // Test function where everything is calculated every frame instead of accessing parameters from dotArray.
-  // Not useful yet, but may help get the logic down if we move to shaders in the future.
-  displayImmediate() {
-    push();
-    this.centerGrid();
+    translate(this.gridOffsetX, this.gridOffsetY);
     let liveY = 0;
     let liveX = 0;
     let tempRadius = this.tileSize - this.dotPadding * this.tileSize;
-    let immediateCounter = 0;
+    let counter = 0;
 
+    // Works like a scanline going from left to right and top to bottom.
     for (let y = 0; y < this.gridRows; y++) {
       for (let x = 0; x < this.gridColumns; x++) {
-
-        // Render the trailing dots and exit the loop after the last dot is reached.
-        if (immediateCounter < this.dotCount) {
-          fill(color(noise(liveX * liveY + immediateCounter + millis() / 1800), 0.5, 1));
+        if (counter < this.dotCount) {
+          fill(this.dotArray[counter].dotColor);
           circle(liveX, liveY, tempRadius);
           liveX += this.tileSize;
-          immediateCounter++;
+          counter++;
         } else {
+
+          // Once it hits dotCount it uses a while loop to display all of the grey dots; it breaks out
+          // of the loop once the grey dots touch the right side of the screen.
           fill(this.disabledDotColor);
           while (liveX < this.gridColumns * this.tileSize - 0.001) {
             circle(liveX, liveY, tempRadius);
@@ -297,7 +284,6 @@ class DotGrid {
       liveX = 0;
       liveY += this.tileSize;
     }
-
     pop();
   }
 }
