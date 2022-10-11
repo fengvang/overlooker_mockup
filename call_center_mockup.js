@@ -206,7 +206,7 @@ class DotGrid {
     }
   }
 
-  // Prints the index of the dot underneath the mouse:
+  // Finds the index of the dot underneath the mouse (needs cleanup, fixes):
   // Uses tileSize/gridRows/gridColumns to figure out where the mouse is.
   // BUG: Currently it treats everything like a square.
   // FIX: if the distance between the mouse position and the nearest dot is greater than dotRadius
