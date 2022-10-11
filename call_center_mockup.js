@@ -1,5 +1,5 @@
 p5.disableFriendlyErrors = true; // Helps with perf on deployed webpage; disable when working on code.
-let boolWGL = 1; // Need to set this if using WebGL.
+let boolWGL = 1; // The WebGL and P2D renderers use different coords, need to space differently for each.
 
 let testDots = 0;
 let textSpacing = 0;
@@ -29,6 +29,7 @@ function setup() {
 
   testDots = new DotGrid(5000, windowWidth, windowHeight, dotPadding);
   testDots.disabledDotColor = color(0.3, 0.1, 0.9);
+  testDots.mouseHover();
 }
 
 // Main draw thread:
@@ -37,22 +38,21 @@ function draw() {
 }
 
 function layoutA() {
-  // Whatever appears first gets drawn over by things that appear later, so
-  // background belongs at the top.
   background(0.3, 0.1, 1.0);
 
   // Main dot rendering.
   testDots.colorRandom();
   testDots.display();
 
-  // Dot logic
-  testDots.mouseHover();
+  // Only update mouseHoverIndex if the mouse has moved.
+  if (mouseX != pmouseX || mouseY != pmouseY) {
+    testDots.mouseHover();
+  }
 
   displayDebugHUD();
 }
 
-// P5.js calls this natively every time the window gets resized.
-// Needed for refitting the grid when phones are rotated or the browser window is changed.
+// Updates the grid anytime the window is resized:
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   testDots.gridWidth = width;
@@ -62,22 +62,18 @@ function windowResized() {
 
 // Prints the current FPS and other info in the upper left corner:
 function displayDebugHUD() {
-  let fps = Math.round(frameRate());
   fill(color(1, 1, 0));
-
-  // Have to center the text depending on renderer due to different coord systems between P2D and webGL.
   if (boolWGL == 1) {
     text("Index " + testDots.mouseHoverIndex, textSpacing * 2.5 - width / 2, (3 * textSpacing - height) / 2);
-    text(fps, textSpacing - width / 2, (3 * textSpacing - height) / 2)
+    text(round(frameRate()), textSpacing - width / 2, (3 * textSpacing - height) / 2)
   } else {
-    text(fps, (3 * textSpacing) / 2, 0)
+    text(round(frameRate()), (3 * textSpacing) / 2, 0)
   }
 }
 
 // Main dot class meant to represent the person working in the call center:
 // Right now this class only stores color, in the future it might store ID#, call state,
 // color gradient information, animation progress, etc.
-// We need to give some thought about what sort of ADT would be best here.
 class DotSingle {
   constructor() {
     this.dotColor = 0;
@@ -174,9 +170,7 @@ class DotGrid {
 
   // Function for figuring out how to center the grid in the middle of the canvas:
   updateGridOffsets() {
-    // The WebGL and P2D renderers use different coord systems, so the grid has to be centered differently for each.
     if (boolWGL == 1) {
-      // WebGL centering:
       if (this.spanW == 1) {
         this.gridOffsetX = (this.tileSize - width) / 2;
         this.gridOffsetY = (this.tileSize * (1 - this.gridRows)) / 2;
@@ -185,7 +179,6 @@ class DotGrid {
         this.gridOffsetY = (this.tileSize - height) / 2;
       }
     } else {
-      // P2D centering:
       if (this.spanW == 1) {
         this.gridOffsetX = this.tileSize / 2;
         this.gridOffsetY = (height - this.tileSize * (this.gridRows - 1)) / 2;
@@ -197,9 +190,6 @@ class DotGrid {
   }
 
   // Temp function for generating a random color:
-  // Going in the trash once we can get API calls (or simulate them).
-  // Coloring is going to add complexity in the future since it will involve keeping track
-  // of animation states.
   colorRandom() {
     for (let i = 0; i < this.dotCount; i++) {
       this.dotArray[i].dotColor = color(noise(i + millis() / 1800), 0.5, 1);
@@ -207,43 +197,37 @@ class DotGrid {
   }
 
   // Finds the index of the dot underneath the mouse (needs cleanup, fixes):
-  // Uses tileSize/gridRows/gridColumns to figure out where the mouse is.
   // BUG: Currently it treats everything like a square.
   // FIX: if the distance between the mouse position and the nearest dot is greater than dotRadius
   // then we are in empty space (requires one computation of distance formula per call, so should be cheap).
   mouseHover() {
-    if (mouseX != pmouseX || mouseY != pmouseY) {
+    let offsetX = 0;
+    let offsetY = 0;
 
-      let offsetX = 0;
-      let offsetY = 0;
-
-      // The mouse position functions also use renderer-dependent coordinates, so we may need 2
-      // different approaches depending on if we're using P2D or WebGL.
-      if (boolWGL == 1) {
-        // Offsets needed due to the empty space in the margins.
-        if (this.spanW == 1) {
-          offsetY = (height - this.tileSize * this.gridRows) / 2;
-        } else {
-          offsetX = (width - this.tileSize * this.gridColumns) / 2;
-        }
-        let xPos = mouseX - offsetX;
-        let yPos = mouseY - offsetY;
-        let discreteXPos = floor(xPos / this.tileSize);
-        let discreteYPos = floor(yPos / this.tileSize);
-        this.mouseHoverIndex = discreteXPos + discreteYPos * this.gridColumns;
-
-        // Had trouble finding the offsets to do this, so saving for later.
-        // Could use dot product trick to get out of using sqrt?
-        let centerDistance = sqrt(pow(0, 2) + pow(0, 2));
-
-        if (discreteXPos < 0 || this.gridColumns <= discreteXPos || discreteYPos < 0 || this.dotCount <= this.mouseHoverIndex) {
-          this.mouseHoverIndex = "UDF";
-        } else if (centerDistance > this.tileRadius) {
-          this.mouseHoverIndex = "MISS";
-        }
+    if (boolWGL == 1) {
+      // Offsets needed due to the empty space in the margins.
+      if (this.spanW == 1) {
+        offsetY = (height - this.tileSize * this.gridRows) / 2;
       } else {
-        // TODO: get it working for P2D as well.
+        offsetX = (width - this.tileSize * this.gridColumns) / 2;
       }
+      let xPos = mouseX - offsetX;
+      let yPos = mouseY - offsetY;
+      let discreteXPos = floor(xPos / this.tileSize);
+      let discreteYPos = floor(yPos / this.tileSize);
+      this.mouseHoverIndex = discreteXPos + discreteYPos * this.gridColumns;
+
+      // Had trouble finding the offsets to do this, so saving for later.
+      // Could use dot product trick to get out of using sqrt?
+      let centerDistance = sqrt(pow(0, 2) + pow(0, 2));
+
+      if (discreteXPos < 0 || this.gridColumns <= discreteXPos || discreteYPos < 0 || this.dotCount <= this.mouseHoverIndex) {
+        this.mouseHoverIndex = "UDF";
+      } else if (centerDistance > this.tileRadius) {
+        this.mouseHoverIndex = "MISS";
+      }
+    } else {
+      // TODO: get it working for P2D as well.
     }
   }
 
