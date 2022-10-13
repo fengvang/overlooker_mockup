@@ -195,14 +195,10 @@ class DotGrid {
           scanX += this.tileSize;
           counter++;
         } else {
-          // Once it hits dotCount it uses a while loop to display all of the grey dots; it breaks out
-          // of the loop once the grey dots touch the right side of the screen.
+          // Once it hits dotCount it uses a single color to represent the grey dots.
           fill(this.disabledDotColor);
-          while (scanX < startX + this.gridWidth - 0.001) {
-            circle(scanX, scanY, dotPerimeter);
-            scanX += this.tileSize;
-          }
-          break;
+          circle(scanX, scanY, dotPerimeter);
+          scanX += this.tileSize;
         }
       }
       scanX = startX;
