@@ -22,7 +22,7 @@ function setup() {
   textFont(fontBold);
 
   let dotPadding = 0.0; // Normalized: 1.0 deletes the entire circle.
-  let totalTestDots = 1;
+  let totalTestDots = 5000;
 
   testColor = new DotColor(totalTestDots);
   testDots = new DotGrid(totalTestDots, width, height, dotPadding);
