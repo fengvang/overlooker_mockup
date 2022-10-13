@@ -16,6 +16,7 @@ function setup() {
   var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
   cnv.style('display', 'block');
   smooth();
+  pixelDensity(1); // Prevents issues on retina displays/mobile.
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
@@ -150,19 +151,22 @@ class DotGrid {
   }
 
   // Finds the index of the dot underneath the mouse:
+  // Treats dots as circular if there are less than 100.
   mouseHover() {
-    let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
     let tileX = floor((mouseX - this.gridMarginX) / this.tileSize);
     let tileY = floor((mouseY - this.gridMarginY) / this.tileSize);
-    let scanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
-    let scanY = tileY * this.tileSize - this.gridHeight / 2 + this.tileSize / 2;
-    let centerDistance = sqrt(pow(mouseX + originX - scanX, 2) + pow(mouseY + originY - scanY, 2));
     mouseHoverIndex = tileX + tileY * this.gridColumns;
 
     if (tileX < 0 || this.gridColumns <= tileX || tileY < 0 || this.dotCount <= mouseHoverIndex) {
       mouseHoverIndex = "UDF";
-    } else if (centerDistance > dotRadius) {
-      mouseHoverIndex = "MISS";
+    } else if (this.dotCount < 100) {
+      let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
+      let scanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
+      let scanY = tileY * this.tileSize - this.gridHeight / 2 + this.tileSize / 2;
+      let centerDistance = sqrt(pow(mouseX + originX - scanX, 2) + pow(mouseY + originY - scanY, 2));
+      if (centerDistance > dotRadius) {
+        mouseHoverIndex = "MISS";
+      }
     }
     // circle(mouseX + originX, mouseY + originY, 5);
     // circle(scanX, scanY, 10);
