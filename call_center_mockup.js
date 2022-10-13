@@ -20,7 +20,7 @@ function setup() {
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
 
-  let dotPadding = 0; // 0 circles touch, 1.0 circles disappear.
+  let dotPadding = 0.0; // Normalized: 1.0 deletes the entire circle.
   let totalTestDots = 5000;
 
   testColor = new DotColor(totalTestDots);
@@ -151,6 +151,7 @@ class DotGrid {
 
   // Finds the index of the dot underneath the mouse:
   mouseHover() {
+    let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
     let tileX = floor((mouseX - this.gridMarginX) / this.tileSize);
     let tileY = floor((mouseY - this.gridMarginY) / this.tileSize);
     let scanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
@@ -160,7 +161,7 @@ class DotGrid {
 
     if (tileX < 0 || this.gridColumns <= tileX || tileY < 0 || this.dotCount <= mouseHoverIndex) {
       mouseHoverIndex = "UDF";
-    } else if (centerDistance > this.tileSize / 2) {
+    } else if (centerDistance > dotRadius) {
       mouseHoverIndex = "MISS";
     }
     // circle(mouseX + originX, mouseY + originY, 5);
@@ -170,6 +171,7 @@ class DotGrid {
   // Main grid display function:
   // Calculates all dot positions every frame (doesn't seem more expensive than accessing from an array).
   display() {
+    let dotPerimeter = this.tileSize * (1 - this.dotPadding);
     let startX = originX + this.gridMarginX + this.tileSize / 2;
     let startY = originY + this.gridMarginY + this.tileSize / 2;
     let scanX = startX;
@@ -181,7 +183,7 @@ class DotGrid {
       for (let x = 0; x < this.gridColumns; x++) {
         if (counter < this.dotCount) {
           fill(testColor.colorArray[counter]);
-          circle(scanX, scanY, this.tileSize);
+          circle(scanX, scanY, dotPerimeter);
           scanX += this.tileSize;
           counter++;
         } else {
@@ -189,7 +191,7 @@ class DotGrid {
           // of the loop once the grey dots touch the right side of the screen.
           fill(this.disabledDotColor);
           while (scanX < startX + this.gridWidth - 0.001) {
-            circle(scanX, scanY, this.tileSize);
+            circle(scanX, scanY, dotPerimeter);
             scanX += this.tileSize;
           }
           break;
