@@ -22,7 +22,7 @@ function setup() {
   textFont(fontBold);
 
   let dotPadding = 0.0; // Normalized: 1.0 deletes the entire circle.
-  let totalTestDots = 5000;
+  let totalTestDots = 1;
 
   testColor = new DotColor(totalTestDots);
   testDots = new DotGrid(totalTestDots, width, height, dotPadding);
@@ -155,21 +155,25 @@ class DotGrid {
   mouseHover() {
     let tileX = floor((mouseX - this.gridMarginX) / this.tileSize);
     let tileY = floor((mouseY - this.gridMarginY) / this.tileSize);
-    mouseHoverIndex = tileX + tileY * this.gridColumns;
+    let tempHoverIndex = tileX + tileY * this.gridColumns;
 
-    if (tileX < 0 || this.gridColumns <= tileX || tileY < 0 || this.dotCount <= mouseHoverIndex) {
+    if (tileX < 0 || this.gridColumns <= tileX || tileY < 0 || this.dotCount <= tempHoverIndex) {
       mouseHoverIndex = "UDF";
     } else if (this.dotCount < 100) {
       let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
-      let scanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
-      let scanY = tileY * this.tileSize - this.gridHeight / 2 + this.tileSize / 2;
-      let centerDistance = sqrt(pow(mouseX + originX - scanX, 2) + pow(mouseY + originY - scanY, 2));
+      let inverseScanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
+      let inverseScanY = tileY * this.tileSize - this.gridHeight / 2 + this.tileSize / 2;
+      let centerDistance = sqrt(pow(mouseX + originX - inverseScanX, 2) + pow(mouseY + originY - inverseScanY, 2));
+      // circle(mouseX + originX, mouseY + originY, 5);
+      // circle(inverseScanX, inverseScanY, 10);
       if (centerDistance > dotRadius) {
         mouseHoverIndex = "MISS";
+      } else {
+        mouseHoverIndex = tileX + tileY * this.gridColumns;
       }
+    } else {
+      mouseHoverIndex = tileX + tileY * this.gridColumns;
     }
-    // circle(mouseX + originX, mouseY + originY, 5);
-    // circle(scanX, scanY, 10);
   }
 
   // Main grid display function:
