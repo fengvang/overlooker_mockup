@@ -26,7 +26,7 @@ function setup() {
 
   testColor = new DotColor(totalTestDots);
   testDots = new DotGrid(totalTestDots, width, height, dotPadding);
-  testDots.disabledDotColor = color(0.3, 0.1, 0.9);
+  testDots.dotColorDisabled = color(0.3, 0.1, 0.9);
   windowResized();
 }
 
@@ -96,14 +96,14 @@ class DotGrid {
   constructor(tempDotCount, canvasWidth, canvasHeight, tempPadding) {
     this.dotCount = tempDotCount;
     this.dotPadding = tempPadding;
-    this.disabledDotColor = 0;
+    this.dotColorDisabled = color(0);
     this.gridWidth = 0;
     this.gridHeight = 0;
     this.gridMarginX = 0;
     this.gridMarginY = 0;
-    this.tileSize = 0;
     this.gridRows = 0;
     this.gridColumns = 0;
+    this.tileSize = 0;
     this.updateTilingMaxSpan(canvasWidth, canvasHeight);
     this.mouseHover();
   }
@@ -161,11 +161,9 @@ class DotGrid {
       mouseHoverIndex = "UDF";
     } else if (this.dotCount < 100) {
       let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
-      let inverseScanX = tileX * this.tileSize - this.gridWidth / 2 + this.tileSize / 2;
-      let inverseScanY = tileY * this.tileSize - this.gridHeight / 2 + this.tileSize / 2;
+      let inverseScanX = originX + this.gridMarginX + this.tileSize / 2 + tileX * this.tileSize;
+      let inverseScanY = originY + this.gridMarginY + this.tileSize / 2 + tileY * this.tileSize;
       let centerDistance = sqrt(pow(mouseX + originX - inverseScanX, 2) + pow(mouseY + originY - inverseScanY, 2));
-      // circle(mouseX + originX, mouseY + originY, 5);
-      // circle(inverseScanX, inverseScanY, 10);
       if (centerDistance > dotRadius) {
         mouseHoverIndex = "MISS";
       } else {
@@ -196,7 +194,7 @@ class DotGrid {
           counter++;
         } else {
           // Once it hits dotCount it uses a single color to represent the grey dots.
-          fill(this.disabledDotColor);
+          fill(this.dotColorDisabled);
           circle(scanX, scanY, dotPerimeter);
           scanX += this.tileSize;
         }
