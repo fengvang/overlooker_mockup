@@ -5,7 +5,7 @@ let testColor = 0;
 let textSpacing = 0;
 let fontRegular, fontBold;
 let originX, originY;
-let mouseHoverIndex = 0;
+let mouseOverIndex = 0;
 
 function preload() {
   fontRegular = loadFont('assets/Inconsolata-Regular.ttf');
@@ -34,15 +34,14 @@ function draw() {
   layoutA();
 }
 
+function mouseClicked() {
+  testDots.updateMouseOverIndex();
+}
+
 function layoutA() {
   background(0.3, 0.1, 1.0);
   testColor.colorRandom();
   testDots.display();
-
-  // Only update mouseHoverIndex if the mouse has moved.
-  if (mouseX != pmouseX || mouseY != pmouseY) {
-    testDots.mouseHover();
-  }
   displayDebugHUD();
 }
 
@@ -62,13 +61,12 @@ function windowResized() {
   }
 
   testDots.updateTilingMaxSpan(width, height);
-  testDots.mouseHover();
 }
 
 // Prints the current FPS and other info in the upper left corner:
 function displayDebugHUD() {
   fill(color(1, 1, 0));
-  text("Index " + mouseHoverIndex, textSpacing * 2.5 + originX, (3 * textSpacing) / 2 + originY);
+  text("Index " + mouseOverIndex, textSpacing * 2.5 + originX, (3 * textSpacing) / 2 + originY);
   text(round(frameRate()), textSpacing + originX, (3 * textSpacing) / 2 + originY)
 }
 
@@ -105,7 +103,7 @@ class DotGrid {
     this.gridColumns = 0;
     this.tileSize = 0;
     this.updateTilingMaxSpan(canvasWidth, canvasHeight);
-    this.mouseHover();
+    this.updateMouseOverIndex();
   }
 
   // Main tiling algorithm:
@@ -151,26 +149,26 @@ class DotGrid {
   }
 
   // Finds the index of the dot underneath the mouse:
-  // Treats dots as circular if there are less than 100.
-  mouseHover() {
-    let tileX = floor((mouseX - this.gridMarginX) / this.tileSize);
-    let tileY = floor((mouseY - this.gridMarginY) / this.tileSize);
-    let tempHoverIndex = tileX + tileY * this.gridColumns;
+  // Treats dots as circular if there are less than 1000.
+  updateMouseOverIndex() {
+    let inverseScanX = floor((mouseX - this.gridMarginX) / this.tileSize);
+    let inverseScanY = floor((mouseY - this.gridMarginY) / this.tileSize);
+    let tempMouseOverIndex = inverseScanX + inverseScanY * this.gridColumns;
 
-    if (tileX < 0 || this.gridColumns <= tileX || tileY < 0 || this.dotCount <= tempHoverIndex) {
-      mouseHoverIndex = "UDF";
-    } else if (this.dotCount < 100) {
+    if (inverseScanX < 0 || this.gridColumns <= inverseScanX || inverseScanY < 0 || this.dotCount <= tempMouseOverIndex) {
+      mouseOverIndex = "UDF";
+    } else if (this.dotCount < 1000) {
       let dotRadius = this.tileSize *  (1 - this.dotPadding) / 2;
-      let inverseScanX = originX + this.gridMarginX + this.tileSize / 2 + tileX * this.tileSize;
-      let inverseScanY = originY + this.gridMarginY + this.tileSize / 2 + tileY * this.tileSize;
-      let centerDistance = sqrt(pow(mouseX + originX - inverseScanX, 2) + pow(mouseY + originY - inverseScanY, 2));
+      let scanX = originX + this.gridMarginX + this.tileSize / 2 + inverseScanX * this.tileSize;
+      let scanY = originY + this.gridMarginY + this.tileSize / 2 + inverseScanY * this.tileSize;
+      let centerDistance = sqrt(pow(mouseX + originX - scanX, 2) + pow(mouseY + originY - scanY, 2));
       if (centerDistance > dotRadius) {
-        mouseHoverIndex = "MISS";
+        mouseOverIndex = "MISS";
       } else {
-        mouseHoverIndex = tileX + tileY * this.gridColumns;
+        mouseOverIndex = inverseScanX + inverseScanY * this.gridColumns;
       }
     } else {
-      mouseHoverIndex = tileX + tileY * this.gridColumns;
+      mouseOverIndex = inverseScanX + inverseScanY * this.gridColumns;
     }
   }
 
