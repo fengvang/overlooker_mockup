@@ -13,21 +13,34 @@ function preload() {
 }
 
 function setup() {
-  var cnv = createCanvas(windowWidth, windowHeight, WEBGL);
+  var cnv = createCanvas(windowWidth - 300, windowHeight, WEBGL);
   cnv.style('display', 'block');
+  cnv.style('position', 'absolute');
+  cnv.style('right', '0');
   smooth();
   pixelDensity(1); // Prevents issues on retina displays/mobile.
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
 
-  let dotPadding = 0.0; // Normalized: 1.0 deletes the entire circle.
+  let dotPadding = 0.10; // Normalized: 1.0 deletes the entire circle.
   let totalTestDots = 5000;
 
   testColor = new DotColor(totalTestDots);
   testDots = new DotGrid(totalTestDots, width, height, dotPadding);
   testDots.dotColorDisabled = color(0.3, 0.1, 0.9);
   windowResized();
+
+  let sideMenu = createDiv('');
+  let button = createButton('Search Employee');
+  let text = createInput('');
+
+  sideMenu.size(300, windowHeight);
+  sideMenu.style('position', 'absolute');
+  sideMenu.style('top', '10px');
+  sideMenu.style('left', '10px');
+  text.parent(sideMenu);
+  button.parent(sideMenu);
 }
 
 function draw() {
@@ -47,7 +60,7 @@ function layoutA() {
 
 // Updates the grid anytime the window is resized:
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  resizeCanvas(windowWidth - 300, windowHeight);
   textSpacing = height / 15;
   textSize(textSpacing);
 
@@ -190,12 +203,12 @@ class DotGrid {
           circle(scanX, scanY, dotPerimeter);
           scanX += this.tileSize;
           counter++;
-        } else {
-          // Once it hits dotCount it uses a single color to represent the grey dots.
-          fill(this.dotColorDisabled);
-          circle(scanX, scanY, dotPerimeter);
-          scanX += this.tileSize;
-        }
+        } // else {
+        //   // Once it hits dotCount it uses a single color to represent the grey dots.
+        //   fill(this.dotColorDisabled);
+        //   circle(scanX, scanY, dotPerimeter);
+        //   scanX += this.tileSize;
+        // }
       }
       scanX = startX;
       scanY += this.tileSize;

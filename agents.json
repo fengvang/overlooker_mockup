@@ -1,0 +1,24 @@
+{"employees":
+    [
+        {
+            "id": 12345,
+            "name": "John Doe",
+            "status": "offline"
+        },
+        {
+            "id": 12346,
+            "name": "Jane Doe",
+            "status": "call"
+        },
+        {
+            "id": 12347,
+            "name": "First Last",
+            "status": "paperwork"
+        },
+        {
+            "id": 12348,
+            "name": "CSC 131",
+            "status": "call"
+        }
+    ]
+}
