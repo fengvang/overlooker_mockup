@@ -20,7 +20,7 @@ function setup() {
   cnv.style('position', 'absolute');
   cnv.style('right', '0');
   smooth();
-  pixelDensity(5); // Prevents issues on retina displays/mobile.
+  pixelDensity(1); // Prevents issues on retina displays/mobile.
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
