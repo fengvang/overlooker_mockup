@@ -2,7 +2,7 @@ body {
     padding: 0; 
     margin: 0; 
     overflow: none;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Open Sans', sans-serif;
 }
 
 label::after{
