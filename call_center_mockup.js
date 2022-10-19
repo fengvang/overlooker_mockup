@@ -6,10 +6,12 @@ let textSpacing = 0;
 let fontRegular, fontBold;
 let originX, originY;
 let mouseOverIndex = 0;
+let logo;
 
 function preload() {
   fontRegular = loadFont('assets/Inconsolata-Regular.ttf');
   fontBold = loadFont('assets/Inconsolata-Bold.ttf');
+  logo = loadImage('assets/overlooker.jpg');
 }
 
 function setup() {
@@ -18,13 +20,13 @@ function setup() {
   cnv.style('position', 'absolute');
   cnv.style('right', '0');
   smooth();
-  pixelDensity(1); // Prevents issues on retina displays/mobile.
+  pixelDensity(5); // Prevents issues on retina displays/mobile.
   noStroke();
   colorMode(HSB, 1, 1, 1, 1);
   textFont(fontBold);
 
   let dotPadding = 0.10; // Normalized: 1.0 deletes the entire circle.
-  let totalTestDots = 5000;
+  let totalTestDots = 8000;
 
   testColor = new DotColor(totalTestDots);
   testDots = new DotGrid(totalTestDots, width, height, dotPadding);
@@ -32,18 +34,55 @@ function setup() {
   windowResized();
 
   let sideMenu = createDiv('');
-  let button = createButton('Search');
+  let search = createButton('Search');
+  let clear = createButton('Clear');
   let text = createInput('');
 
-  sideMenu.size(270, windowHeight / 2);
+  sideMenu.size(300, windowHeight / 2);
   sideMenu.style('position', 'relative');
-  //sideMenu.style('background-color', 'black');
-  sideMenu.style('left', '1rem');
-  sideMenu.style('top', '1rem');
+  sideMenu.style('top', '70px');
+  // sideMenu.style('background-color', 'black');
+  
+  let img = createImg(
+    'assets/overlooker.jpg',
+    'Overlooker Demo'
+  );
+  img.position(10, 10);
+
   text.parent(sideMenu);
-  button.parent(sideMenu);
-  button.style('position', 'relative');
-  button.style('left', '1rem');
+  text.size(125);
+  text.style('position', 'relative');
+  text.style('left', '5px');
+  text.style('top', '5px');
+
+  search.parent(sideMenu);
+  search.style('position', 'relative');
+  search.style('left', '10px');
+  search.style('top', '5px');
+  search.mousePressed(clearText);
+
+  clear.parent(sideMenu);
+  clear.style('position', 'relative');
+  clear.style('left', '15px');
+  clear.style('top', '5px');
+  clear.mousePressed(clearText);
+
+  function clearText() {
+    text.value('');
+  }
+
+  let filterDiv = createDiv('');
+  filterDiv.parent(sideMenu);
+  filterDiv.style('position', 'relative');
+  filterDiv.style('top', '10px');
+
+  let status = createRadio();
+  status.option('On Call');
+  status.option('After Call');
+  status.option('Idle');
+  status.option('Offline');
+  status.style('width', '125');
+  status.parent(filterDiv);
 }
 
 function draw() {
@@ -64,7 +103,7 @@ function layoutA() {
 // Updates the grid anytime the window is resized:
 function windowResized() {
   resizeCanvas(windowWidth - 300, windowHeight);
-  textSpacing = height / 15;
+  textSpacing = height / 30;
   textSize(textSpacing);
 
   // The WebGL and P2D renderers use different coords, need to move the origin for webGL.
