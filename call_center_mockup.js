@@ -32,15 +32,18 @@ function setup() {
   windowResized();
 
   let sideMenu = createDiv('');
-  let button = createButton('Search Employee');
+  let button = createButton('Search');
   let text = createInput('');
 
-  sideMenu.size(300, windowHeight);
-  sideMenu.style('position', 'absolute');
-  sideMenu.style('top', '10px');
-  sideMenu.style('left', '10px');
+  sideMenu.size(270, windowHeight / 2);
+  sideMenu.style('position', 'relative');
+  //sideMenu.style('background-color', 'black');
+  sideMenu.style('left', '1rem');
+  sideMenu.style('top', '1rem');
   text.parent(sideMenu);
   button.parent(sideMenu);
+  button.style('position', 'relative');
+  button.style('left', '1rem');
 }
 
 function draw() {
